@@ -13,12 +13,12 @@ void initQueue(queue *q)
     }
 }
 
-void printArray(int *arr)
+void printQueue(queue *q)
 {
     printf("head->[ ");
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
-        printf("%i%s", arr[i], i == QUEUE_SIZE - 1 ? "" : ", ");
+        printf("%i%s", q->Elements[i], i == QUEUE_SIZE - 1 ? "" : ", ");
     }
     printf(" ]\n");
 }
@@ -39,7 +39,7 @@ void enqueue(queue *q, int processID)
     {
         q->Elements[q->count++] = processID;
         printf("After enqueue: \n");
-        printArray(q->Elements);
+        printQueue(q);
     }
     else
     {
@@ -58,7 +58,7 @@ int dequeue(queue *q)
         }
         q->count--;
         printf("After dequeue: \n");
-        printArray(q->Elements);
+        printQueue(q);
         return processID;
     }
     else

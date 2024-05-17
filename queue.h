@@ -11,6 +11,7 @@ typedef struct
 } queue;
 
 void initQueue(queue *q);
+void printQueue(queue *q);
 void enqueue(queue *q, int processID);
 int dequeue(queue *q);
 bool isEmpty(queue *q);
