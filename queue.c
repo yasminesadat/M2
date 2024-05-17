@@ -2,8 +2,6 @@
 #include <stdbool.h>
 #include "queue.h"
 
-#define QUEUE_SIZE 3
-
 void initQueue(queue *q)
 {
     q->count = 0;

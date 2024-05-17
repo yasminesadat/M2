@@ -48,6 +48,5 @@ int semSignal(semaphore *s, int processID)
             return -1;
         }
     }
-    // Process not signaling case
     return -1;
 }
