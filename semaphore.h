@@ -10,7 +10,8 @@ typedef struct
     int ownerID;
 } semaphore;
 
-void semWait(semaphore *s, int processID);
-void semSignal(semaphore *s, int processID);
+void initSemaphore(semaphore *s);
+bool semWait(semaphore *s, int processID);
+int semSignal(semaphore *s, int processID); // returns next processID to use the resource
 
 #endif

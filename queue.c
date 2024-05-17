@@ -4,6 +4,15 @@
 
 #define QUEUE_SIZE 3
 
+void initQueue(queue *q)
+{
+    q->count = 0;
+    for (int i = 0; i < QUEUE_SIZE; i++)
+    {
+        q->Elements[i] = 0;
+    }
+}
+
 void printArray(int *arr)
 {
     printf("head->[ ");
