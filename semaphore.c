@@ -12,7 +12,7 @@ void semWait(semaphore *s, int processID)
     }
     else if (s->ownerID == processID)
     {
-        printf("Resource is already acquired by the process");
+        printf("Resource is already acquired by the process\n");
     }
     else
     {
@@ -36,5 +36,9 @@ void semSignal(semaphore *s, int processID)
             s->ava = true;
             printf("Resource is now available\n");
         }
+    }
+    else
+    {
+        printf("Process attempting to signal isn't the same process that has acquired the resource\n");
     }
 }
