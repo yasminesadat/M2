@@ -413,13 +413,14 @@ char *readLine(char *processID, char *fileNameVar)
         {
             fclose(file);
 
-            // Allocate memory for the return buffer including space for null terminator
-            char *buffer = malloc(strlen(tempBuffer) + 1); // +1 for null terminator
+            // Allocate memory for the return buffer
+            char *buffer = malloc(sizeof(tempBuffer));
             if (buffer == NULL)
             {
                 perror("Unable to allocate memory\n");
                 return NULL;
             }
+            trimWhitespace(tempBuffer);
 
             // Copy the string into the allocated buffer
             strcpy(buffer, tempBuffer);
