@@ -36,8 +36,8 @@ void enqueue(queue *q, int processID)
     if (!isFull(q))
     {
         q->Elements[q->count++] = processID;
-        printf("After enqueue: \n");
-        printQueue(q);
+        // printf("After enqueue: \n");
+        // printQueue(q);
     }
     else
     {
@@ -55,8 +55,8 @@ int dequeue(queue *q)
             q->Elements[i] = q->Elements[i + 1];
         }
         q->count--;
-        printf("After dequeue: \n");
-        printQueue(q);
+        // printf("After dequeue: \n");
+        // printQueue(q);
         return processID;
     }
     else

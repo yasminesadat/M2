@@ -24,7 +24,7 @@ bool semWait(semaphore *s, int processID)
     }
     else
     {
-        printf("Process %i is now blocked for the resource\n", processID);
+        printf("Process %i is now blocked for the resource being used by Process %i\n", processID, s->ownerID);
         enqueue(&(s->blockedQueue), processID);
         return false;
     }

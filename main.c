@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "semaphore.h"
 #include "blocked_queue.h"
@@ -45,6 +46,15 @@ void printMemory();
 void runOSsimulator();
 
 //////////////////////////// HELPERS FOR MEMORY ///////////////////////////////////
+void trimWhitespace(char *str)
+{
+    int length = strlen(str);
+    while (length > 0 && isspace((unsigned char)str[length - 1]))
+    {
+        str[length - 1] = '\0';
+        length--;
+    }
+}
 char *getValue(char *processID, char *name)
 {
     bool inProcessBlock = false;
@@ -67,7 +77,6 @@ char *getValue(char *processID, char *name)
             return memory[i].value;
         }
     }
-    printf("Variable does not exist for this process");
     return NULL;
 }
 
@@ -184,73 +193,29 @@ void printMemory()
     }
 }
 //////////////////////////// Interpreter functionality ////////////////////////////
-void executeFromReady(int processID)
-{
-    // printf("Quantum is %i for Process %s\n", );
-    //  char *token = strtok(instruction, " ");
-    //  if (strcmp(token, "print") == 0)
-    //  {
-    //      token = strtok(NULL, " ");
-    //      int index;
-    //      for (index = 0; index < variable_count; index++)
-    //      {
-    //          if (strcmp(token, variables[index].name) == 0)
-    //          {
-    //              print_output(variables[index].value);
-    //              break;
-    //          }
-    //      }
-    //  }
-    //  else if (strcmp(token, "assign") == 0)
-    //  {
-    //      token = strtok(NULL, " ");
-    //      // char var_name[MAX_LENGTH];
-    //      strcpy(var_name, token);
-    //      token = strtok(NULL, " ");
-    //      // char value[MAX_LENGTH];
-    //      strcpy(value, token);
-    //      assign_var(var_name, value);
-    //  }
-    //  else if (strcmp(token, "writeFile") == 0)
-    //  {
-    //      token = strtok(NULL, " ");
-    //      // char filename[MAX_LENGTH];
-    //      strcpy(filename, token);
-    //      token = strtok(NULL, "\n");
-    //      // char data[MAX_LENGTH];
-    //      strcpy(data, token);
-    //      write_to_file(filename, data);
-    //  }
-    //  else if (strcmp(token, "readFile") == 0)
-    //  {
-    //      token = strtok(NULL, "\n");
-    //      // char filename[MAX_LENGTH];
-    //      strcpy(filename, token);
-    //      read_from_file(filename);
-    //  }
-    //  else if (strcmp(token, "printFromTo") == 0)
-    //  {
-    //      token = strtok(NULL, " ");
-    //      int start = atoi(token);
-    //      token = strtok(NULL, "\n");
-    //      int end = atoi(token);
-    //      print_from_to(start, end);
-    //  }
-    //  else if (strcmp(token, "semWait") == 0)
-    //  {
-    //  }
-    //  else if (strcmp(token, "semSignal") == 0)
-    //  {
-    //  }
-}
 
-void print(char *value)
+void print(char *processID, char *variable)
 {
+    char *value = getValue(processID, variable);
+    if (value == NULL)
+    {
+        printf("Variable doesn't exist for this process\n");
+        return;
+    }
     printf("%s\n", value);
 }
 
-void printFromTo(int start, int end)
+void printFromTo(char *processID, char *startVar, char *endVar)
 {
+    char *first = getValue(processID, startVar);
+    char *last = getValue(processID, endVar);
+    if (first == NULL || last == NULL)
+    {
+        printf("Variable doesn't exist for this process\n");
+        return;
+    }
+    int start = atoi(first);
+    int end = atoi(last);
     for (int i = start; i <= end; i++)
     {
         printf("%d\n", i);
@@ -310,7 +275,6 @@ void assign(char *processID, char *var_name, char *value)
         if (strcmp(value, "input") == 0)
         {
             char input[100];
-            char *endptr;
             printf("Please enter a value for %s: ", var_name);
             scanf("%s", input);
             strcpy(memory[index].value, input);
@@ -328,6 +292,11 @@ void writeFile(char *processID, char *fileNameVar, char *dataVar)
 
     char *fileName = getValue(processID, fileNameVar);
     char *dataValue = getValue(processID, dataVar);
+    if (dataValue == NULL || fileName == NULL)
+    {
+        printf("Variable doesn't exist for this process\n");
+        return;
+    }
 
     printf("Filename to be created: %s\n", fileName);
     printf("Value to be saved: %s\n", dataValue);
@@ -347,6 +316,11 @@ void writeFile(char *processID, char *fileNameVar, char *dataVar)
 void readFile(char *processID, char *fileNameVar)
 {
     char *fileName = getValue(processID, fileNameVar);
+    if (fileName == NULL)
+    {
+        printf("Variable doesn't exist for this process\n");
+        return;
+    }
 
     printf("Filename to be read: %s\n", fileName);
 
@@ -369,24 +343,26 @@ void readFile(char *processID, char *fileNameVar)
 bool semaphoreWait(int processID, char *semaphore)
 {
     bool acquired;
-    if (strcmp("userInput", semaphore) == 0)
+    if (strcmp(semaphore, "userInput") == 0)
     {
         acquired = semWait(&input, processID);
     }
-    else if (strcmp("userOutput", semaphore) == 0)
+    else if (strcmp(semaphore, "userOutput") == 0)
     {
         acquired = semWait(&output, processID);
     }
-    else if (strcmp("file", semaphore) == 0)
+    else if (strcmp(semaphore, "file") == 0)
     {
         acquired = semWait(&file, processID);
     }
     if (!acquired)
     {
+        // add to blocked queue
         enqueueProcess(&blockedQueue, processID);
-        char *pid;
+        char pid[100];
         sprintf(pid, "%d", processID);
-        setValue(pid, "status", "BLOCKED");
+        // update status
+        setValue(pid, "state", "BLOCKED");
     }
     return acquired;
 }
@@ -394,6 +370,7 @@ bool semaphoreWait(int processID, char *semaphore)
 void semaphoreSignal(int processID, char *semaphore)
 {
     int nextProcess; // to acquire the resource
+    trimWhitespace(semaphore);
     if (strcmp("userInput", semaphore) == 0)
     {
         nextProcess = semSignal(&input, processID);
@@ -407,12 +384,84 @@ void semaphoreSignal(int processID, char *semaphore)
         nextProcess = semSignal(&file, processID);
     }
     if (nextProcess != -1)
-    { // add to MLFQ again the blocked process if exists
+    {
         char *pid;
-        sprintf(pid, "%d", processID);
+        sprintf(pid, "%d", nextProcess);
         char *currPriority = getValue(pid, "currPriority");
-        returnProcess(&scheduler, processID, atoi(currPriority));
+        // remove from blocked queue
+        dequeueProcess(&blockedQueue, nextProcess);
+        //  add to MLFQ again the blocked process if exists
+        returnProcess(&scheduler, nextProcess, atoi(currPriority));
+        // update its state
+        setValue(pid, "state", "READY");
+        printMLFQ(&scheduler);
     }
+}
+
+bool executeInstruction(int processID, int PC)
+{
+    char pid[100];
+    sprintf(pid, "%d", processID);
+    // avoid manipulation of memory with  null terminators
+    char tempStr[100];
+    strcpy(tempStr, memory[PC].value);
+    char *token = strtok(tempStr, " ");
+    if (strcmp(token, "print") == 0)
+    {
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        print(pid, token);
+    }
+    else if (strcmp(token, "printFromTo") == 0)
+    {
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        char *start = token;
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        char *end = token;
+        printFromTo(pid, start, end);
+    }
+    else if (strcmp(token, "assign") == 0)
+    {
+        // add nested case
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        char *variable = token;
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        char *value = token;
+        assign(pid, variable, value);
+    }
+    else if (strcmp(token, "writeFile") == 0)
+    {
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        char *filename = token;
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        char *data = token;
+        writeFile(pid, filename, data);
+    }
+    else if (strcmp(token, "readFile") == 0)
+    {
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        readFile(pid, token);
+    }
+    else if (strcmp(token, "semWait") == 0)
+    {
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        return semaphoreWait(processID, token);
+    }
+    else if (strcmp(token, "semSignal") == 0)
+    {
+        token = strtok(NULL, " ");
+        trimWhitespace(token);
+        semaphoreSignal(processID, token);
+    }
+    return true;
 }
 /////////////////////////////  SIMULATOR  ///////////////////////////////
 void OSsetUp()
@@ -431,11 +480,11 @@ void OSsetUp()
     // }
     for (int i = 0; i < 3; i++)
     {
-        printf("%s will arrive at cycle = %d\n", data[i].programName, data[i].arrivalTime);
+        printf("%s will arrive at t = %d\n", data[i].programName, data[i].arrivalTime);
     }
 
     initSemaphore(&input);
-    initSemaphore(&input);
+    initSemaphore(&file);
     initSemaphore(&output);
     initBlockedQueue(&blockedQueue);
     initMLFQ(&scheduler);
@@ -457,9 +506,10 @@ char *processArrived()
 
 void runOSsimulator()
 {
-    while (1)
+    int processID;
+    do
     {
-        printf("\n--------- CLOCK CYCLE %i ---------\n", clock);
+        printf("\n--------- CLOCK CYCLE AT t = %i ---------\n", clock);
         if (arrived < 3)
         {
             char *program = processArrived();
@@ -470,46 +520,76 @@ void runOSsimulator()
                 program = processArrived();
             }
         }
-        int processID = getProcess(&scheduler);
+        processID = getProcess(&scheduler);
         // check end of simulator
         if (processID == -1)
         {
             return;
         }
-
         char pid[100];
         sprintf(pid, "%d", processID);
         char *PCValue = getValue(pid, "PC");
-        char *endptr;
-        int PC = strtol(PCValue, &endptr, 10);
+        int PC = atoi(PCValue);
         int quantum = scheduler.currQuantum;
-        printf("Process %i now has a quantum of %i\n", processID, quantum);
-        if (clock == 9)
-            return;
+        char *remTime = getValue(pid, "remainingTime");
+        int remaining = atoi(remTime);
+        int running = remaining < quantum ? remaining : quantum;
+        printf("Process %i now has a quantum of %i and wants to run for %i clock cycle(s)\n", processID, quantum, running);
+        setValue(pid, "state", "RUNNING");
+        for (int i = 0; i < running; i++)
+        {
+            bool success = executeInstruction(processID, PC);
+
+            // increment PC and decrement Remaining Time
+            PC += 1;
+            char newPC[100];
+            sprintf(newPC, "%d", PC);
+            setValue(pid, "PC", newPC);
+            remaining -= 1;
+            char newRem[100];
+            sprintf(newRem, "%d", remaining);
+            setValue(pid, "remainingTime", newRem);
+            if (!success)
+                break;
+            if (success && i < running - 1)
+            {
+                clock++;
+                printf("\n--------- CLOCK CYCLE AT t = %i ---------\n", clock);
+            }
+        }
+        // done with process
+        if (strcmp(getValue(pid, "remainingTime"), "0") == 0)
+        {
+            setValue(pid, "state", "FINISHED");
+        }
+        // process is demoted and not blocked
+        else if (strcmp(getValue(pid, "state"), "BLOCKED") != 0)
+        {
+            int newPriority = demoteProcess(&scheduler, processID, atoi(getValue(pid, "currPriority")));
+            char newValue[100];
+            sprintf(newValue, "%d", newPriority);
+            setValue(pid, "currPriority", newValue);
+            setValue(pid, "state", "READY");
+        }
+        printMemory();
+
         clock++;
-    }
+    } while (1);
 }
 
 int main()
 {
-
-    strcpy(data[0].programName, "Program_1.txt");
+    strcpy(data[0].programName, "Program_2.txt");
     data[0].arrivalTime = 0;
 
-    strcpy(data[1].programName, "Program_2.txt");
+    strcpy(data[1].programName, "test.txt");
     data[1].arrivalTime = 0;
 
-    strcpy(data[2].programName, "Program_3.txt");
+    strcpy(data[2].programName, "Program_1.txt");
     data[2].arrivalTime = 2;
     OSsetUp();
+    printBlockedQueue(&blockedQueue);
     printMLFQ(&scheduler);
-    // queue q;
-    // initQueue(&q);
-    // enqueue(&q, 1);
-    // enqueue(&q, 3);
-    // dequeue(&q);
-    // dequeue(&q);
-    // dequeue(&q);
     return 0;
 }
 
