@@ -55,6 +55,7 @@ void trimWhitespace(char *str)
         length--;
     }
 }
+
 char *getValue(char *processID, char *name)
 {
     bool inProcessBlock = false;
