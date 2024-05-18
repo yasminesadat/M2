@@ -21,15 +21,17 @@ typedef struct
 {
     char programName[100];
     int arrivalTime;
-} initalData;
+    int remainingTime;
+} programData;
 
 // Get Data from User
-initalData data[3];
+programData data[3];
 
 typedef struct
 {
     char name[100];
     char value[100];
+
 } memoryElement;
 
 // Global Array
@@ -108,7 +110,7 @@ void setValue(char *processID, char *name, char *value)
 void allocateMemory(char *programName, int arrivalTime)
 {
     // Load Program
-    int j = i + 11;
+    int j = i + 9;
     FILE *filePointer;
     char line[100];
 
@@ -129,7 +131,7 @@ void allocateMemory(char *programName, int arrivalTime)
         // Remove new line
         line[strcspn(line, "\n")] = '\0';
         // Store line in  memory
-        sprintf(numStr, "%d", j - i - 11 + 1);
+        sprintf(numStr, "%d", j - i - 8);
         strcpy(memory[j].name, "instruction ");
         strcat(memory[j].name, numStr);
         strcpy(memory[j++].value, line);
@@ -138,7 +140,7 @@ void allocateMemory(char *programName, int arrivalTime)
     // Close the file
     fclose(filePointer);
 
-    int rem = j - i - 11;
+    int rem = j - i - 9;
     // has now upperBound value
     j--;
 
@@ -147,7 +149,7 @@ void allocateMemory(char *programName, int arrivalTime)
 
     // 0
     strcpy(memory[i].name, "processID");
-    sprintf(str, "%d", nextProcessID++);
+    sprintf(str, "%d", nextProcessID);
     strcpy(memory[i++].value, str);
     // 1
     strcpy(memory[i].name, "state");
@@ -158,7 +160,7 @@ void allocateMemory(char *programName, int arrivalTime)
     strcpy(memory[i++].value, str);
     // 3
     strcpy(memory[i].name, "PC");
-    sprintf(str, "%d", i + 8);
+    sprintf(str, "%d", i + 6);
     strcpy(memory[i++].value, str);
     // 4
     strcpy(memory[i].name, "lowerBound");
@@ -168,16 +170,12 @@ void allocateMemory(char *programName, int arrivalTime)
     strcpy(memory[i].name, "upperBound");
     sprintf(str, "%d", j);
     strcpy(memory[i++].value, str);
-    // 6
-    strcpy(memory[i].name, "arrivalTime");
-    sprintf(str, "%d", arrivalTime);
-    strcpy(memory[i++].value, str);
-    // 7
-    strcpy(memory[i].name, "remainingTime");
-    sprintf(str, "%d", rem);
-    strcpy(memory[i++].value, str);
+
+    // in process info
+    data[nextProcessID - 1].remainingTime = rem;
     // jump after the loaded instructions
     i = j + 1;
+    nextProcessID++;
     printf("%s has been loaded into memory\n", programName);
     // return this print
     // printMemory();
@@ -231,7 +229,7 @@ void assign(char *processID, char *var_name, char *value)
 
         if (strcmp(memory[i].name, "processID") == 0 && strcmp(memory[i].value, processID) == 0)
         {
-            i += 8;
+            i += 6;
             if (memory[i].name[0] == '\0')
             {
                 strcpy(memory[i].name, var_name);
@@ -576,6 +574,8 @@ void runOSsimulator()
                 program = processArrived();
             }
         }
+        printBlockedQueue(&blockedQueue);
+        printMLFQ(&scheduler);
         processID = getProcess(&scheduler);
         // check end of simulator
         if (processID == -1)
@@ -587,11 +587,11 @@ void runOSsimulator()
         char *PCValue = getValue(pid, "PC");
         int PC = atoi(PCValue);
         int quantum = scheduler.currQuantum;
-        char *remTime = getValue(pid, "remainingTime");
-        int remaining = atoi(remTime);
+        int remaining = data[processID - 1].remainingTime;
         int running = remaining < quantum ? remaining : quantum;
         printf("Process %i now has a quantum of %i and wants to run for %i clock cycle(s)\n", processID, quantum, running);
         setValue(pid, "state", "RUNNING");
+        printMemory();
         for (int i = 0; i < running; i++)
         {
             bool success = executeInstruction(processID, PC);
@@ -601,10 +601,7 @@ void runOSsimulator()
             char newPC[100];
             sprintf(newPC, "%d", PC);
             setValue(pid, "PC", newPC);
-            remaining -= 1;
-            char newRem[100];
-            sprintf(newRem, "%d", remaining);
-            setValue(pid, "remainingTime", newRem);
+            data[processID - 1].remainingTime -= 1;
             if (!success)
             {
                 // not blocked in last instruction
@@ -619,10 +616,13 @@ void runOSsimulator()
             {
                 clock++;
                 printf("\n--------- CLOCK CYCLE AT t = %i ---------\n", clock);
+                printBlockedQueue(&blockedQueue);
+                printMLFQ(&scheduler);
+                printMemory();
             }
         }
         // done with process
-        if (strcmp(getValue(pid, "remainingTime"), "0") == 0)
+        if (data[processID - 1].remainingTime == 0)
         {
             setValue(pid, "state", "FINISHED");
         }
@@ -645,9 +645,6 @@ void runOSsimulator()
             sprintf(newValue, "%d", newPriority);
             setValue(pid, "currPriority", newValue);
         }
-        printMemory();
-        printBlockedQueue(&blockedQueue);
-        printMLFQ(&scheduler);
         clock++;
     } while (1);
 }
@@ -663,14 +660,12 @@ int main()
     strcpy(data[2].programName, "Program_3.txt");
     data[2].arrivalTime = 3;
     OSsetUp();
-    printBlockedQueue(&blockedQueue);
-    printMLFQ(&scheduler);
     return 0;
 }
 
 ////////////////////////////// HELPER INFO /////////////////////////////////////////
 
-// Total : 12 lines
+// Total : 9 lines
 // PCB: processID
 //      state-> READY, RUNNING, BLOCKED, FINISHED
 //      currPriority
@@ -678,7 +673,4 @@ int main()
 //      lowerBound
 //      upperBound
 
-// Process Info: arrivalTime
-//               remainingTime
-//               variableNext
 // then variable 1,2,3
