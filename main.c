@@ -399,13 +399,55 @@ void semaphoreSignal(int processID, char *semaphore)
     }
 }
 
+char *readLine(char *processID, char *fileNameVar)
+{
+    char *fileName = getValue(processID, fileNameVar);
+
+    printf("Filename to be read: %s\n", fileName);
+
+    FILE *file = fopen(fileName, "r");
+    if (file != NULL)
+    {
+        char tempBuffer[100];
+        if (fgets(tempBuffer, 100, file) != NULL)
+        {
+            fclose(file);
+
+            // Allocate memory for the return buffer including space for null terminator
+            char *buffer = malloc(strlen(tempBuffer) + 1); // +1 for null terminator
+            if (buffer == NULL)
+            {
+                perror("Unable to allocate memory\n");
+                return NULL;
+            }
+
+            // Copy the string into the allocated buffer
+            strcpy(buffer, tempBuffer);
+
+            printf("Values read from %s: %s\n", fileName, buffer);
+            return buffer;
+        }
+        else
+        {
+            fclose(file);
+        }
+    }
+    else
+    {
+        perror("Unable to open file for reading");
+    }
+    return NULL;
+}
+
 bool executeInstruction(int processID, int PC)
 {
     char pid[100];
     sprintf(pid, "%d", processID);
-    // avoid manipulation of memory with  null terminators
+    // avoid manipulation of memory with null terminators
     char tempStr[100];
     strcpy(tempStr, memory[PC].value);
+    printf("Instruction to be executed: %s\n", tempStr);
+
     char *token = strtok(tempStr, " ");
     if (strcmp(token, "print") == 0)
     {
@@ -432,7 +474,18 @@ bool executeInstruction(int processID, int PC)
         token = strtok(NULL, " ");
         trimWhitespace(token);
         char *value = token;
-        assign(pid, variable, value);
+        if (strcmp("readFile", value) == 0)
+        {
+            token = strtok(NULL, " ");
+            trimWhitespace(token);
+            char *line = readLine(pid, token);
+            assign(pid, variable, line);
+            free(line);
+        }
+        else
+        {
+            assign(pid, variable, value);
+        }
     }
     else if (strcmp(token, "writeFile") == 0)
     {
@@ -510,6 +563,7 @@ void runOSsimulator()
     int processID;
     do
     {
+        bool blockedInLastInstruc = false;
         printf("\n--------- CLOCK CYCLE AT t = %i ---------\n", clock);
         if (arrived < 3)
         {
@@ -551,7 +605,15 @@ void runOSsimulator()
             sprintf(newRem, "%d", remaining);
             setValue(pid, "remainingTime", newRem);
             if (!success)
-                break;
+            {
+                // not blocked in last instruction
+                // same quantum
+                if (i < running - 1)
+                    break;
+                else if (i == running - 1)
+                    blockedInLastInstruc = true;
+            }
+
             if (success && i < running - 1)
             {
                 clock++;
@@ -563,7 +625,7 @@ void runOSsimulator()
         {
             setValue(pid, "state", "FINISHED");
         }
-        // process is demoted and not blocked
+        // process is demoted if not blocked
         else if (strcmp(getValue(pid, "state"), "BLOCKED") != 0)
         {
             int newPriority = demoteProcess(&scheduler, processID, atoi(getValue(pid, "currPriority")));
@@ -572,22 +634,33 @@ void runOSsimulator()
             setValue(pid, "currPriority", newValue);
             setValue(pid, "state", "READY");
         }
+        // blocked in last instruction
+        // demote but don't place in ready queue
+        else if (blockedInLastInstruc)
+        {
+            int currPriority = atoi(getValue(pid, "currPriority"));
+            int newPriority = currPriority == 4 ? currPriority : currPriority + 1;
+            char newValue[100];
+            sprintf(newValue, "%d", newPriority);
+            setValue(pid, "currPriority", newValue);
+        }
         printMemory();
-
+        printBlockedQueue(&blockedQueue);
+        printMLFQ(&scheduler);
         clock++;
     } while (1);
 }
 
 int main()
 {
-    strcpy(data[0].programName, "Program_2.txt");
+    strcpy(data[0].programName, "Program_1.txt");
     data[0].arrivalTime = 0;
 
-    strcpy(data[1].programName, "test.txt");
-    data[1].arrivalTime = 0;
+    strcpy(data[1].programName, "Program_2.txt");
+    data[1].arrivalTime = 3;
 
-    strcpy(data[2].programName, "Program_1.txt");
-    data[2].arrivalTime = 2;
+    strcpy(data[2].programName, "Program_3.txt");
+    data[2].arrivalTime = 3;
     OSsetUp();
     printBlockedQueue(&blockedQueue);
     printMLFQ(&scheduler);
