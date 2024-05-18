@@ -177,12 +177,11 @@ void allocateMemory(char *programName, int arrivalTime)
     i = j + 1;
     nextProcessID++;
     printf("%s has been loaded into memory\n", programName);
-    // return this print
-    // printMemory();
 }
 
 void printMemory()
 {
+    printf("\n");
     for (int i = 0; i < 60; i++)
     {
         if (memory[i].name[0] != '\0')
@@ -344,14 +343,17 @@ bool semaphoreWait(int processID, char *semaphore)
     bool acquired;
     if (strcmp(semaphore, "userInput") == 0)
     {
+        printf("UserInput Semaphore: ");
         acquired = semWait(&input, processID);
     }
     else if (strcmp(semaphore, "userOutput") == 0)
     {
+        printf("UserOutput Semaphore: ");
         acquired = semWait(&output, processID);
     }
     else if (strcmp(semaphore, "file") == 0)
     {
+        printf("File Semaphore: ");
         acquired = semWait(&file, processID);
     }
     if (!acquired)
@@ -372,14 +374,17 @@ void semaphoreSignal(int processID, char *semaphore)
     trimWhitespace(semaphore);
     if (strcmp("userInput", semaphore) == 0)
     {
+        printf("UserInput Semaphore: ");
         nextProcess = semSignal(&input, processID);
     }
     else if (strcmp("userOutput", semaphore) == 0)
     {
+        printf("UserOutput Semaphore: ");
         nextProcess = semSignal(&output, processID);
     }
     else if (strcmp("file", semaphore) == 0)
     {
+        printf("File Semaphore: ");
         nextProcess = semSignal(&file, processID);
     }
     if (nextProcess != -1)
@@ -393,7 +398,6 @@ void semaphoreSignal(int processID, char *semaphore)
         returnProcess(&scheduler, nextProcess, atoi(currPriority));
         // update its state
         setValue(pid, "state", "READY");
-        printMLFQ(&scheduler);
     }
 }
 
@@ -466,7 +470,6 @@ bool executeInstruction(int processID, int PC)
     }
     else if (strcmp(token, "assign") == 0)
     {
-        // add nested case
         token = strtok(NULL, " ");
         trimWhitespace(token);
         char *variable = token;
@@ -655,10 +658,10 @@ int main()
     data[0].arrivalTime = 0;
 
     strcpy(data[1].programName, "Program_2.txt");
-    data[1].arrivalTime = 3;
+    data[1].arrivalTime = 1;
 
     strcpy(data[2].programName, "Program_3.txt");
-    data[2].arrivalTime = 3;
+    data[2].arrivalTime = 1;
     OSsetUp();
     return 0;
 }
