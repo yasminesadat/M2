@@ -597,7 +597,7 @@ int main()
 
 // Total : 12 lines
 // PCB: processID
-//      state->NEW, READY, RUNNING, BLOCKED, FINISHED
+//      state-> READY, RUNNING, BLOCKED, FINISHED
 //      currPriority
 //      PC
 //      lowerBound
