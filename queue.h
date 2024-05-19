@@ -7,7 +7,7 @@
 typedef struct
 {
     int count;
-    int Elements[QUEUE_SIZE];
+    int elements[QUEUE_SIZE];
 } queue;
 
 void initQueue(queue *q);

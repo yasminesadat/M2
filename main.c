@@ -341,27 +341,27 @@ void readFile(char *processID, char *fileNameVar)
 bool semaphoreWait(int processID, char *semaphore)
 {
     bool acquired;
+    char pid[100];
+    sprintf(pid, "%d", processID);
     if (strcmp(semaphore, "userInput") == 0)
     {
         printf("UserInput Semaphore: ");
-        acquired = semWait(&input, processID);
+        acquired = semWait(&input, processID, atoi(getValue(pid, "currPriority")));
     }
     else if (strcmp(semaphore, "userOutput") == 0)
     {
         printf("UserOutput Semaphore: ");
-        acquired = semWait(&output, processID);
+        acquired = semWait(&output, processID, atoi(getValue(pid, "currPriority")));
     }
     else if (strcmp(semaphore, "file") == 0)
     {
         printf("File Semaphore: ");
-        acquired = semWait(&file, processID);
+        acquired = semWait(&file, processID, atoi(getValue(pid, "currPriority")));
     }
     if (!acquired)
     {
         // add to blocked queue
         enqueueProcess(&blockedQueue, processID);
-        char pid[100];
-        sprintf(pid, "%d", processID);
         // update status
         setValue(pid, "state", "BLOCKED");
     }
@@ -395,7 +395,7 @@ void semaphoreSignal(int processID, char *semaphore)
         // remove from blocked queue
         dequeueProcess(&blockedQueue, nextProcess);
         //  add to MLFQ again the blocked process if exists
-        returnProcess(&scheduler, nextProcess, atoi(currPriority));
+        placeProcess(&scheduler, nextProcess, atoi(currPriority));
         // update its state
         setValue(pid, "state", "READY");
     }
@@ -560,6 +560,16 @@ char *processArrived()
     return NULL;
 }
 
+void printSemaphores()
+{
+    printf("UserInput Semaphore PQ: ");
+    printPQueue(&(input.blockedQueue));
+    printf("UserOutput Semaphore PQ: ");
+    printPQueue(&(output.blockedQueue));
+    printf("File Semaphore PQ: ");
+    printPQueue(&(file.blockedQueue));
+}
+
 void runOSsimulator()
 {
     int processID;
@@ -595,8 +605,18 @@ void runOSsimulator()
         printf("Process %i now has a quantum of %i and wants to run for %i clock cycle(s)\n", processID, quantum, running);
         setValue(pid, "state", "RUNNING");
         printMemory();
+        printSemaphores();
         for (int i = 0; i < running; i++)
         {
+            // last instruction in quantum so demote process priority
+            if (i == running - 1)
+            {
+                int currPriority = atoi(getValue(pid, "currPriority"));
+                int newPriority = currPriority == 4 ? currPriority : currPriority + 1;
+                char newValue[100];
+                sprintf(newValue, "%d", newPriority);
+                setValue(pid, "currPriority", newValue);
+            }
             bool success = executeInstruction(processID, PC);
 
             // increment PC and decrement Remaining Time
@@ -619,9 +639,20 @@ void runOSsimulator()
             {
                 clock++;
                 printf("\n--------- CLOCK CYCLE AT t = %i ---------\n", clock);
+                if (arrived < 3)
+                {
+                    char *program = processArrived();
+                    while (program != NULL)
+                    {
+                        allocateMemory(program, clock);
+                        arrived++;
+                        program = processArrived();
+                    }
+                }
                 printBlockedQueue(&blockedQueue);
                 printMLFQ(&scheduler);
                 printMemory();
+                printSemaphores();
             }
         }
         // done with process
@@ -632,37 +663,26 @@ void runOSsimulator()
         // process is demoted if not blocked
         else if (strcmp(getValue(pid, "state"), "BLOCKED") != 0)
         {
-            int newPriority = demoteProcess(&scheduler, processID, atoi(getValue(pid, "currPriority")));
-            char newValue[100];
-            sprintf(newValue, "%d", newPriority);
-            setValue(pid, "currPriority", newValue);
+            placeProcess(&scheduler, processID, atoi(getValue(pid, "currPriority")));
             setValue(pid, "state", "READY");
         }
-        // blocked in last instruction
-        // demote but don't place in ready queue
-        else if (blockedInLastInstruc)
-        {
-            int currPriority = atoi(getValue(pid, "currPriority"));
-            int newPriority = currPriority == 4 ? currPriority : currPriority + 1;
-            char newValue[100];
-            sprintf(newValue, "%d", newPriority);
-            setValue(pid, "currPriority", newValue);
-        }
+
         clock++;
     } while (1);
 }
 
 int main()
 {
-    strcpy(data[0].programName, "Program_1.txt");
+    strcpy(data[0].programName, "3.txt");
     data[0].arrivalTime = 0;
 
-    strcpy(data[1].programName, "Program_2.txt");
+    strcpy(data[1].programName, "2.txt");
     data[1].arrivalTime = 1;
 
-    strcpy(data[2].programName, "Program_3.txt");
-    data[2].arrivalTime = 1;
+    strcpy(data[2].programName, "1.txt");
+    data[2].arrivalTime = 3;
     OSsetUp();
+    printSemaphores();
     return 0;
 }
 

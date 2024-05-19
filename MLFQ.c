@@ -28,7 +28,7 @@ void addProcess(MLFQ *mlfq, int processID)
     enqueue(&mlfq->queues[0], processID);
 }
 
-void returnProcess(MLFQ *mlfq, int processID, int currentLevel)
+void placeProcess(MLFQ *mlfq, int processID, int currentLevel)
 {
     enqueue(&mlfq->queues[currentLevel - 1], processID);
 }
@@ -44,18 +44,4 @@ int getProcess(MLFQ *mlfq)
         }
     }
     return -1; // No process found
-}
-
-int demoteProcess(MLFQ *mlfq, int processID, int currentLevel)
-{
-    if (currentLevel < 4)
-    {
-        enqueue(&mlfq->queues[currentLevel], processID);
-        return currentLevel + 1;
-    }
-    else
-    {
-        enqueue(&mlfq->queues[3], processID); // Already at lowest priority
-        return currentLevel;
-    }
 }

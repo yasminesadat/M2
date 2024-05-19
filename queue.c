@@ -7,7 +7,7 @@ void initQueue(queue *q)
     q->count = 0;
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
-        q->Elements[i] = 0;
+        q->elements[i] = 0;
     }
 }
 
@@ -16,7 +16,7 @@ void printQueue(queue *q)
     printf("head->[ ");
     for (int i = 0; i < QUEUE_SIZE; i++)
     {
-        printf("%i%s", q->Elements[i], i == QUEUE_SIZE - 1 ? "" : ", ");
+        printf("%i%s", q->elements[i], i == QUEUE_SIZE - 1 ? "" : ", ");
     }
     printf(" ]\n");
 }
@@ -35,7 +35,7 @@ void enqueue(queue *q, int processID)
 {
     if (!isFull(q))
     {
-        q->Elements[q->count++] = processID;
+        q->elements[q->count++] = processID;
         // printf("After enqueue: \n");
         // printQueue(q);
     }
@@ -49,10 +49,10 @@ int dequeue(queue *q)
 {
     if (!isEmpty(q))
     {
-        int processID = q->Elements[0];
+        int processID = q->elements[0];
         for (int i = 0; i < QUEUE_SIZE - 1; i++)
         { // shifting
-            q->Elements[i] = q->Elements[i + 1];
+            q->elements[i] = q->elements[i + 1];
         }
         q->count--;
         // printf("After dequeue: \n");

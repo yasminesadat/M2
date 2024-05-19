@@ -4,11 +4,11 @@
 
 void initSemaphore(semaphore *s)
 {
-    initQueue(&(s->blockedQueue));
+    initPQueue(&(s->blockedQueue));
     s->ava = true;
 }
 
-bool semWait(semaphore *s, int processID)
+bool semWait(semaphore *s, int processID, int priority)
 {
     if (s->ava)
     {
@@ -25,7 +25,7 @@ bool semWait(semaphore *s, int processID)
     else
     {
         printf("Process %i is now blocked for the resource being used by Process %i\n", processID, s->ownerID);
-        enqueue(&(s->blockedQueue), processID);
+        enqueueP(&(s->blockedQueue), processID, priority);
         return false;
     }
 }
@@ -34,9 +34,9 @@ int semSignal(semaphore *s, int processID)
 {
     if (processID == s->ownerID)
     {
-        if (!isEmpty(&(s->blockedQueue)))
+        if (!isEmptyP(&(s->blockedQueue)))
         {
-            int dequeuedProcessID = dequeue(&(s->blockedQueue));
+            int dequeuedProcessID = dequeueP(&(s->blockedQueue));
             printf("Resource can now be used by process %i\n", dequeuedProcessID);
             s->ownerID = dequeuedProcessID;
             return dequeuedProcessID;

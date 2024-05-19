@@ -13,8 +13,7 @@ typedef struct
 void initMLFQ(MLFQ *mlfq);
 void printMLFQ(MLFQ *mlfq);
 void addProcess(MLFQ *mlfq, int processID);
-void returnProcess(MLFQ *mlfq, int processID, int currentLevel);
+void placeProcess(MLFQ *mlfq, int processID, int currentLevel);
 int getProcess(MLFQ *mlfq);
-int demoteProcess(MLFQ *mlfq, int processID, int currentLevel);
 
 #endif
