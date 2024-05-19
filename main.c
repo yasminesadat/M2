@@ -575,7 +575,6 @@ void runOSsimulator()
     int processID;
     do
     {
-        bool blockedInLastInstruc = false;
         printf("\n--------- CLOCK CYCLE AT t = %i ---------\n", clock);
         if (arrived < 3)
         {
@@ -631,8 +630,6 @@ void runOSsimulator()
                 // same quantum
                 if (i < running - 1)
                     break;
-                else if (i == running - 1)
-                    blockedInLastInstruc = true;
             }
 
             if (success && i < running - 1)
