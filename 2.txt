@@ -1,0 +1,4 @@
+assign a 2
+assign b 2
+semWait file
+assign b 3
