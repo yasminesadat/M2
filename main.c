@@ -626,10 +626,7 @@ void runOSsimulator()
             data[processID - 1].remainingTime -= 1;
             if (!success)
             {
-                // not blocked in last instruction
-                // same quantum
-                if (i < running - 1)
-                    break;
+                break;
             }
 
             if (success && i < running - 1)
@@ -670,13 +667,13 @@ void runOSsimulator()
 
 int main()
 {
-    strcpy(data[0].programName, "3.txt");
+    strcpy(data[0].programName, "Program_1.txt");
     data[0].arrivalTime = 0;
 
-    strcpy(data[1].programName, "2.txt");
+    strcpy(data[1].programName, "Program_2.txt");
     data[1].arrivalTime = 1;
 
-    strcpy(data[2].programName, "1.txt");
+    strcpy(data[2].programName, "Program_3.txt");
     data[2].arrivalTime = 3;
     OSsetUp();
     printSemaphores();
