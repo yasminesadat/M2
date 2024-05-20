@@ -569,6 +569,18 @@ void printSemaphores()
     printPQueue(&(file.blockedQueue));
 }
 
+bool getAllArrived()
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (data[i].arrivalTime > clock)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void runOSsimulator()
 {
     int processID;
@@ -589,9 +601,16 @@ void runOSsimulator()
         printMLFQ(&scheduler);
         processID = getProcess(&scheduler);
         // check end of simulator
-        if (processID == -1)
+        // no process in MLFQ and all have arrived
+        if (processID == -1 && getAllArrived())
         {
-            return;
+            break;
+        }
+        // at least one process has not arrived yet but MLFQ is empty
+        else if (processID == -1 && !getAllArrived())
+        {
+            clock++;
+            continue;
         }
         char pid[100];
         sprintf(pid, "%d", processID);
@@ -662,6 +681,8 @@ void runOSsimulator()
 
         clock++;
     } while (1);
+    printMemory();
+    printSemaphores();
 }
 
 int main()
@@ -675,7 +696,6 @@ int main()
     // strcpy(data[2].programName, "Program_3.txt");
     // data[2].arrivalTime = 3;
     OSsetUp();
-    printSemaphores();
     return 0;
 }
 

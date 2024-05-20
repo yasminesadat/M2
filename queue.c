@@ -55,6 +55,7 @@ int dequeue(queue *q)
             q->elements[i] = q->elements[i + 1];
         }
         q->count--;
+        q->elements[q->count] = 0;
         // printf("After dequeue: \n");
         // printQueue(q);
         return processID;
