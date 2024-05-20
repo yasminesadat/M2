@@ -522,18 +522,17 @@ bool executeInstruction(int processID, int PC)
 /////////////////////////////  SIMULATOR  ///////////////////////////////
 void OSsetUp()
 {
-    // uncomment later
-    //  char *name;
-    // int time;
-    // for (int i = 0; i < 3; i++)
-    // {
-    //     printf("Enter name of program to run:\n");
-    //     scanf("%s", name);
-    //     printf("Enter program arrival time:\n");
-    //     scanf("%d", &time);
-    //     strcpy(data[i].programName, name);
-    //     data[i].arrivalTime = time;
-    // }
+    char name[100];
+    int time;
+    for (int i = 0; i < 3; i++)
+    {
+        printf("Enter name of program to run:\n");
+        scanf("%s", name);
+        printf("Enter program arrival time:\n");
+        scanf("%d", &time);
+        strcpy(data[i].programName, name);
+        data[i].arrivalTime = time;
+    }
     for (int i = 0; i < 3; i++)
     {
         printf("%s will arrive at t = %d\n", data[i].programName, data[i].arrivalTime);
@@ -667,14 +666,14 @@ void runOSsimulator()
 
 int main()
 {
-    strcpy(data[0].programName, "Program_1.txt");
-    data[0].arrivalTime = 0;
+    // strcpy(data[0].programName, "Program_1.txt");
+    // data[0].arrivalTime = 0;
 
-    strcpy(data[1].programName, "Program_2.txt");
-    data[1].arrivalTime = 1;
+    // strcpy(data[1].programName, "Program_2.txt");
+    // data[1].arrivalTime = 1;
 
-    strcpy(data[2].programName, "Program_3.txt");
-    data[2].arrivalTime = 3;
+    // strcpy(data[2].programName, "Program_3.txt");
+    // data[2].arrivalTime = 3;
     OSsetUp();
     printSemaphores();
     return 0;
