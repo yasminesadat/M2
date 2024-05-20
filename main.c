@@ -389,7 +389,7 @@ void semaphoreSignal(int processID, char *semaphore)
     }
     if (nextProcess != -1)
     {
-        char *pid;
+        char pid[100];
         sprintf(pid, "%d", nextProcess);
         char *currPriority = getValue(pid, "currPriority");
         // remove from blocked queue
