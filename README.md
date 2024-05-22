@@ -1,5 +1,5 @@
 # OS-Simulator
-This project is a simulation of an operating system using Multilevel Feedback Queue Scheduling and Mutexes. The scheduler has four queues with quantums 1,2,4,and 8 respectively. The mutexes available control resource sharing across 3 resources: file reading and writing, input from user, and output to the screen. Each mutex has a priority queue to gauarantee that the process that returns to the MLFQ is the one with the highest priority, where 1 is the highest priority and 3 is the lowest.
+This project is a simulation of an operating system using Multilevel Feedback Queue Scheduling and Mutexes. The scheduler has four queues with quantums 1,2,4,and 8 respectively. The mutexes available control resource sharing across 3 resources: file reading and writing, input from user, and output to the screen. Each mutex has a priority queue to gauarantee that the process that returns to the MLFQ is the one with the highest priority, where 1 is the highest priority and 4 is the lowest.
 
 **Set Up:**
 
