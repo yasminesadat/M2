@@ -1,8 +1,0 @@
-semWait file
-assign b test1
-print b
-print b
-assign c test3
-assign a test1
-print a
-semSignal file
